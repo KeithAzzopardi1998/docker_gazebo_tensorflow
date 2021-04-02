@@ -22,6 +22,7 @@ docker run -it \
     --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
     --env="XAUTHORITY=$XAUTH" \
     --volume="$XAUTH:$XAUTH" \
+    --gpus=all \
     --runtime=nvidia \
     bfmc-sim:latest \
     roslaunch sim_pkg map_with_all_objects.launch

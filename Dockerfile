@@ -42,6 +42,7 @@ RUN source /opt/ros/melodic/setup.bash && \
 # Required python packages
 RUN \
   apt-get install -y python-pip && \
+  python -m pip install --upgrade pip && \
 #  pip install matplotlib && \
   pip install numpy && \
 #  pip install scipy && \
@@ -52,7 +53,8 @@ RUN \
   pip install bokeh && \
   pip install vcstool && \
   pip install rosbag_pandas && \
-  pip install opencv-python==4.2.0.32
+  pip install opencv-python==4.2.0.32 && \
+  pip install tensorflow-gpu==2.1.0
 
 EXPOSE 11345
 

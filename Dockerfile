@@ -1,4 +1,62 @@
-FROM osrf/ros:melodic-desktop-full
+FROM tensorflow/tensorflow:2.1.0-gpu
+
+#we should be using the ROS melodic image, but installing 
+#tensorflow is not as straightforward. So instead, we start
+#with the tensorflow image, and follow the dockerfiles to
+#"rebuild" the image from scratch. The dockerfiles can be
+#found at https://github.com/osrf/docker_images/tree/20e12ac5ff52ce5c38aaf5d0dbcf0256f124c3ba/ros/melodic/ubuntu/bionic
+
+#the ROS melodic images are "stacked" on top of eachother
+# 1 : core
+RUN echo 'Etc/UTC' > /etc/timezone && \
+    ln -s /usr/share/zoneinfo/Etc/UTC /etc/localtime && \
+    apt-get update && \
+    apt-get install -q -y --no-install-recommends tzdata && \
+    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -q -y --no-install-recommends \
+    dirmngr \
+    gnupg2 \
+    && rm -rf /var/lib/apt/lists/*
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+RUN echo "deb http://packages.ros.org/ros/ubuntu bionic main" > /etc/apt/sources.list.d/ros1-latest.list
+ENV LANG C.UTF-8
+ENV LC_ALL C.UTF-8
+ENV ROS_DISTRO melodic
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-melodic-ros-core=1.4.1-0* \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2 : base
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    build-essential \
+    python-rosdep \
+    python-rosinstall \
+    python-vcstools \
+    && rm -rf /var/lib/apt/lists/*
+RUN rosdep init && \
+  rosdep update --rosdistro $ROS_DISTRO
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-melodic-ros-base=1.4.1-0* \
+    && rm -rf /var/lib/apt/lists/*
+
+# 3 : robot
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-melodic-robot=1.4.1-0* \
+    && rm -rf /var/lib/apt/lists/*
+
+# 4 : desktop
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-melodic-desktop=1.4.1-0* \
+    && rm -rf /var/lib/apt/lists/*
+
+# 5 : desktop-full
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ros-melodic-desktop-full=1.4.1-0* \
+    && rm -rf /var/lib/apt/lists/*
+
+# moving on, we can assume that we have a "combination" of the following two images:
+# 1. tensorflow/tensorflow:2.1.0-gpu
+# 2. osrf/ros:melodic-desktop-full
 
 ENV NVIDIA_VISIBLE_DEVICES \
     ${NVIDIA_VISIBLE_DEVICES:-all}
@@ -43,12 +101,7 @@ RUN source /opt/ros/melodic/setup.bash && \
 RUN \
   apt-get install -y python-pip && \
   python -m pip install --upgrade pip && \
-#  pip install matplotlib && \
   pip install numpy && \
-#  pip install scipy && \
-#  pip install jupyter && \
-#  pip install seaborn && \
-#  pip install pandas && \
   pip install scikit-build && \
   pip install bokeh && \
   pip install vcstool && \
